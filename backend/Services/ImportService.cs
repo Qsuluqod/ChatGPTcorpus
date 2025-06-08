@@ -4,22 +4,26 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ChatGPTcorpus.Models;
+using ChatGPTcorpus.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChatGPTcorpus.Services
 {
     public class ImportService
     {
         private readonly string _basePath;
+        private readonly KorpusDbContext _dbContext;
 
-        public ImportService(string basePath)
+        public ImportService(string basePath, KorpusDbContext dbContext)
         {
             _basePath = basePath ?? throw new ArgumentNullException(nameof(basePath));
+            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
-        public async Task<List<Conversation>> ImportConversationsAsync(string userId, Dictionary<string, object> metadata = null)
+        public async Task<List<Conversation>> ImportConversationsAsync(string userId, Dictionary<string, object>? metadata = null)
         {
             try
             {
@@ -49,6 +53,10 @@ namespace ChatGPTcorpus.Services
                         if (conversation != null)
                         {
                             conversations.Add(conversation);
+                            
+                            // Convert to database model and save
+                            var dbConversation = ConvertToDbModel(conversation, metadata ?? new Dictionary<string, object>());
+                            await SaveConversationToDatabaseAsync(dbConversation);
                         }
                     }
                     catch (Exception ex)
@@ -59,29 +67,7 @@ namespace ChatGPTcorpus.Services
                     }
                 }
 
-                Console.WriteLine($"Successfully parsed {conversations.Count} conversations");
-
-                if (metadata != null)
-                {
-                    foreach (var conv in conversations)
-                    {
-                        try
-                        {
-                            conv.IsSingleUser = metadata.ContainsKey("isSingleUser") ? Convert.ToBoolean(metadata["isSingleUser"]) : false;
-                            conv.Gender = metadata.ContainsKey("gender") ? metadata["gender"]?.ToString() ?? string.Empty : string.Empty;
-                            conv.AgeCategory = metadata.ContainsKey("ageCategory") ? metadata["ageCategory"]?.ToString() ?? string.Empty : string.Empty;
-                            conv.EducationLevel = metadata.ContainsKey("educationLevel") ? metadata["educationLevel"]?.ToString() ?? string.Empty : string.Empty;
-                            conv.CurrentRegion = metadata.ContainsKey("currentRegion") ? metadata["currentRegion"]?.ToString() ?? string.Empty : string.Empty;
-                            conv.ChildhoodRegion = metadata.ContainsKey("childhoodRegion") ? metadata["childhoodRegion"]?.ToString() ?? string.Empty : string.Empty;
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error applying metadata to conversation {conv.Id}: {ex.Message}");
-                            // Continue with next conversation
-                            continue;
-                        }
-                    }
-                }
+                Console.WriteLine($"Successfully parsed and saved {conversations.Count} conversations");
 
                 // Print debug information
                 PrintDebugInfo(conversations);
@@ -94,6 +80,129 @@ namespace ChatGPTcorpus.Services
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 throw;
             }
+        }
+
+        private async Task SaveConversationToDatabaseAsync(DbConversation conversation)
+        {
+            try
+            {
+                // Check if conversation already exists
+                var existingConversation = await _dbContext.Conversations
+                    .Include(c => c.Messages)
+                    .FirstOrDefaultAsync(c => c.Id == conversation.Id);
+
+                if (existingConversation != null)
+                {
+                    // Update existing conversation
+                    _dbContext.Entry(existingConversation).CurrentValues.SetValues(conversation);
+                    
+                    // Remove existing messages
+                    _dbContext.Messages.RemoveRange(existingConversation.Messages);
+                }
+                else
+                {
+                    // Add new conversation
+                    await _dbContext.Conversations.AddAsync(conversation);
+                }
+
+                // Save changes
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving conversation to database: {ex.Message}");
+                throw;
+            }
+        }
+
+        private static T? GetValueFromMetadata<T>(Dictionary<string, object>? metadata, string key, T? defaultValue = default)
+        {
+            if (metadata == null || !metadata.ContainsKey(key) || metadata[key] == null)
+                return defaultValue;
+
+            var value = metadata[key];
+
+            if (value is T tValue)
+                return tValue;
+
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                try
+                {
+                    if (typeof(T) == typeof(bool) && (jsonElement.ValueKind == System.Text.Json.JsonValueKind.True || jsonElement.ValueKind == System.Text.Json.JsonValueKind.False))
+                        return (T)(object)jsonElement.GetBoolean();
+                    if (typeof(T) == typeof(string)) {
+                        var val =  jsonElement.GetString() ?? "";
+                        return (T)(object)val;
+                    }
+                    if (typeof(T) == typeof(int) && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                        return (T)(object)jsonElement.GetInt32();
+                }
+                catch { }
+            }
+
+            try
+            {
+                return (T)Convert.ChangeType(value, typeof(T));
+            }
+            catch
+            {
+                return defaultValue;
+            }
+        }
+
+        private static DateTime ToUtc(DateTime dt)
+        {
+            if (dt.Kind == DateTimeKind.Utc)
+                return dt;
+            if (dt.Kind == DateTimeKind.Local)
+                return dt.ToUniversalTime();
+            // Unspecified
+            return DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+        }
+
+        private DbConversation ConvertToDbModel(Conversation conversation, Dictionary<string, object> metadata)
+        {
+            var dbConversation = new DbConversation
+            {
+                Id = conversation.Id,
+                Title = conversation.Title,
+                CreateTime = ToUtc(conversation.CreateTime),
+                UpdateTime = ToUtc(conversation.UpdateTime),
+                Author = conversation.Author,
+                IsSingleUser = conversation.IsSingleUser,
+                Gender = conversation.Gender,
+                AgeCategory = conversation.AgeCategory,
+                EducationLevel = conversation.EducationLevel,
+                CurrentRegion = conversation.CurrentRegion,
+                ChildhoodRegion = conversation.ChildhoodRegion,
+                Messages = conversation.Messages.Values.Select(m => new DbMessage
+                {
+                    Id = m.Id,
+                    Author = m.Author,
+                    CreateTime = ToUtc(m.CreateTime),
+                    Content = m.Content,
+                    Status = m.Status,
+                    EndTurn = m.EndTurn?.ToString(),
+                    Weight = m.Weight,
+                    Metadata = m.Metadata,
+                    Recipient = m.Recipient,
+                    ConversationId = conversation.Id
+                }).ToList()
+            };
+
+            // Apply metadata if provided
+            if (metadata != null)
+            {
+                dbConversation.IsSingleUser = GetValueFromMetadata(metadata, "isSingleUser", false);
+                dbConversation.Gender = GetValueFromMetadata(metadata, "gender", "");
+                dbConversation.AgeCategory = GetValueFromMetadata(metadata, "ageCategory", "");
+                dbConversation.EducationLevel = GetValueFromMetadata(metadata, "educationLevel", "");
+                dbConversation.CurrentRegion = GetValueFromMetadata(metadata, "currentRegion", "");
+                dbConversation.ChildhoodRegion = GetValueFromMetadata(metadata, "childhoodRegion", "");
+            }
+
+            return dbConversation;
         }
 
         private void PrintDebugInfo(List<Conversation> conversations)
@@ -122,7 +231,7 @@ namespace ChatGPTcorpus.Services
             }
         }
 
-        private Conversation ParseConversation(JObject conversationObj)
+        private Conversation? ParseConversation(JObject? conversationObj)
         {
             if (conversationObj == null) return null;
 
@@ -132,8 +241,8 @@ namespace ChatGPTcorpus.Services
                 {
                     Id = conversationObj["id"]?.ToString() ?? Guid.NewGuid().ToString(),
                     Title = conversationObj["title"]?.ToString() ?? "Untitled Conversation",
-                    CreateTime = conversationObj["create_time"]?.Value<long>() != null 
-                        ? DateTimeOffset.FromUnixTimeSeconds(conversationObj["create_time"].Value<long>()).DateTime 
+                    CreateTime = conversationObj["create_time"] is JValue v && v.Type == JTokenType.Integer && v.Value != null
+                        ? DateTimeOffset.FromUnixTimeSeconds(Convert.ToInt64(v.Value ?? 0)).DateTime
                         : DateTime.UtcNow,
                     UpdateTime = DateTime.UtcNow,
                     Messages = new Dictionary<string, Message>(),
@@ -202,16 +311,16 @@ namespace ChatGPTcorpus.Services
                     var parts = contentObj["parts"] as JArray;
                     if (parts != null && parts.Any())
                     {
-                        return string.Join("\n", parts.Select(p => p.ToString()));
+                        return string.Join("\n", parts.Select(p => p?.ToString() ?? string.Empty));
                     }
                 }
                 else if (content is JArray contentArray)
                 {
-                    return string.Join("\n", contentArray.Select(p => p.ToString()));
+                    return string.Join("\n", contentArray.Select(p => p?.ToString() ?? string.Empty));
                 }
                 else if (content is JValue contentValue)
                 {
-                    return contentValue.ToString();
+                    return contentValue?.ToString() ?? string.Empty;
                 }
 
                 return string.Empty;
@@ -223,7 +332,7 @@ namespace ChatGPTcorpus.Services
             }
         }
 
-        private object ParseEndTurn(JToken endTurnToken)
+        private object? ParseEndTurn(JToken? endTurnToken)
         {
             if (endTurnToken == null || endTurnToken.Type == JTokenType.Null)
                 return null;
@@ -231,7 +340,14 @@ namespace ChatGPTcorpus.Services
                 return endTurnToken.Value<bool>();
             if (endTurnToken.Type == JTokenType.Array)
                 return endTurnToken.ToObject<List<object>>();
-            return endTurnToken.ToString();
+            return endTurnToken?.ToString() ?? string.Empty;
+        }
+
+        private long? SafeValueLong(IEnumerable<JToken>? value)
+        {
+            if (value == null) return null;
+            var first = value.FirstOrDefault();
+            return first != null ? first.Value<long?>() : null;
         }
     }
 }

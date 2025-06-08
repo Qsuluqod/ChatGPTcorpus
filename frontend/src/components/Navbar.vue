@@ -1,5 +1,5 @@
 <template>
-  <nav class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary-from to-primary-to animate-glow">
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary-from to-primary-to">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center">

@@ -26,8 +26,7 @@
   }
 
   .card {
-    @apply bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200
-           hover:shadow-[0_0_15px_rgba(168,85,247,0.2)] hover:scale-[1.01] transform;
+    @apply bg-white rounded-lg shadow-md;
   }
 
   .neon-text {

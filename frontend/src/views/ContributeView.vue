@@ -1,8 +1,8 @@
 <template>
-  <div class="max-w-2xl mx-auto px-4 py-8">
+  <div class="w-[900px] mx-auto px-4 py-8">
     <div class="space-y-6">
       <div
-        class="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center bg-gray-50/50 hover:border-primary-from transition-colors duration-200"
+        class="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center bg-gray-50/50 hover:border-primary-from transition-colors duration-200 w-full"
         :class="{ 'border-primary-from bg-primary-from/5 shadow-[0_0_15px_rgba(168,85,247,0.3)]': isDragging }"
         @dragenter.prevent="isDragging = true"
         @dragleave.prevent="isDragging = false"
@@ -56,9 +56,9 @@
 
         <!-- Metadata Form -->
         <div class="space-y-6">
-          <div class="bg-gray-50/50 rounded-lg p-6 border border-gray-100">
+          <div class="bg-gray-50/50 rounded-lg p-6 border border-gray-100 w-full">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Usage Information</h3>
-            <div class="space-y-4">
+            <div class="space-y-4 w-full">
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-700">Usage Type</label>
                 <div class="flex items-center space-x-6">
@@ -92,14 +92,14 @@
           </div>
 
           <!-- Single User Additional Fields -->
-          <div v-if="metadata.isSingleUser" class="bg-gray-50/50 rounded-lg p-6 border border-gray-100">
+          <div v-if="metadata.isSingleUser" class="bg-gray-50/50 rounded-lg p-6 border border-gray-100 w-full">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Demographic Information</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-700">Gender</label>
                 <select
                   v-model="metadata.gender"
-                  class="input bg-white/80 backdrop-blur border-2 border-primary-from focus:border-primary-to shadow-[0_0_8px_rgba(168,85,247,0.08)]"
+                  class="input w-full bg-white/80 backdrop-blur border-2 border-primary-from focus:border-primary-to shadow-[0_0_8px_rgba(168,85,247,0.08)]"
                 >
                   <option value="">Select gender</option>
                   <option value="male">Male</option>
@@ -113,7 +113,7 @@
                 <label class="block text-sm font-medium text-gray-700">Age Category</label>
                 <select
                   v-model="metadata.ageCategory"
-                  class="input bg-white/80 backdrop-blur border-2 border-primary-from focus:border-primary-to shadow-[0_0_8px_rgba(168,85,247,0.08)]"
+                  class="input w-full bg-white/80 backdrop-blur border-2 border-primary-from focus:border-primary-to shadow-[0_0_8px_rgba(168,85,247,0.08)]"
                 >
                   <option value="">Select age category</option>
                   <option value="under_18">Under 18</option>
@@ -131,7 +131,7 @@
                 <label class="block text-sm font-medium text-gray-700">Education Level</label>
                 <select
                   v-model="metadata.educationLevel"
-                  class="input bg-white/80 backdrop-blur border-2 border-primary-from focus:border-primary-to shadow-[0_0_8px_rgba(168,85,247,0.08)]"
+                  class="input w-full bg-white/80 backdrop-blur border-2 border-primary-from focus:border-primary-to shadow-[0_0_8px_rgba(168,85,247,0.08)]"
                 >
                   <option value="">Select education level</option>
                   <option value="primary">Primary School</option>
@@ -151,7 +151,7 @@
                   type="text"
                   v-model="metadata.currentRegion"
                   placeholder="Enter your current region"
-                  class="input bg-white/80 backdrop-blur border-2 border-primary-from focus:border-primary-to shadow-[0_0_8px_rgba(168,85,247,0.08)]"
+                  class="input w-full bg-white/80 backdrop-blur border-2 border-primary-from focus:border-primary-to shadow-[0_0_8px_rgba(168,85,247,0.08)]"
                 />
               </div>
 
@@ -161,7 +161,7 @@
                   type="text"
                   v-model="metadata.childhoodRegion"
                   placeholder="Enter your childhood region"
-                  class="input bg-white/80 backdrop-blur border-2 border-primary-from focus:border-primary-to shadow-[0_0_8px_rgba(168,85,247,0.08)]"
+                  class="input w-full bg-white/80 backdrop-blur border-2 border-primary-from focus:border-primary-to shadow-[0_0_8px_rgba(168,85,247,0.08)]"
                 />
               </div>
             </div>

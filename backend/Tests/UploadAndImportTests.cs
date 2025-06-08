@@ -64,8 +64,8 @@ namespace ChatGPTcorpus.Tests
             var statsResponse = await client.GetAsync("/api/search/stats");
             var statsJson = await statsResponse.Content.ReadAsStringAsync();
             var stats = JObject.Parse(statsJson);
-            Assert.True((int)stats["contributions"] > 0);
-            Assert.True((int)stats["messages"] > 0);
+            Assert.True(stats["contributions"]?.Value<int>() > 0);
+            Assert.True(stats["messages"]?.Value<int>() > 0);
         }
     }
 } 

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import SearchView from '../views/SearchView.vue'
 import ContributeView from '../views/ContributeView.vue'
 import CorpusInfoView from '../views/CorpusInfoView.vue'
+import ConversationView from '../views/ConversationView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,6 +25,11 @@ const router = createRouter({
       path: '/corpus-info',
       name: 'corpus-info',
       component: CorpusInfoView
+    },
+    {
+      path: '/conversation/:conversationId/:messageId',
+      name: 'conversation',
+      component: ConversationView
     }
   ]
 })

@@ -15,13 +15,11 @@ namespace ChatGPTcorpus.Controllers
     {
         private readonly ZipService _zipService;
         private readonly ImportService _importService;
-        private readonly SearchServiceProvider _searchProvider;
 
-        public UploadController(ZipService zipService, ImportService importService, SearchServiceProvider searchProvider)
+        public UploadController(ZipService zipService, ImportService importService)
         {
             _zipService = zipService;
             _importService = importService;
-            _searchProvider = searchProvider;
         }
 
         [HttpPost]
@@ -46,14 +44,13 @@ namespace ChatGPTcorpus.Controllers
             {
                 _zipService.ExtractZip(tempPath, extractPath);
                 // Parse metadata if provided
-                Dictionary<string, object> metadataDict = null;
+                Dictionary<string, object>? metadataDict = null;
                 if (!string.IsNullOrEmpty(metadata))
                 {
-                    metadataDict = JsonSerializer.Deserialize<Dictionary<string, object>>(metadata);
+                    metadataDict = JsonSerializer.Deserialize<Dictionary<string, object>>(metadata) ?? new Dictionary<string, object>();
                 }
-                // Import conversations and update in-memory list
-                var conversations = await _importService.ImportConversationsAsync(userId, metadataDict);
-                _searchProvider.SetConversations(conversations);
+                // Import conversations and save to database
+                var conversations = await _importService.ImportConversationsAsync(userId, metadataDict ?? new Dictionary<string, object>());
                 return Ok(new { message = "File uploaded and conversations loaded!", fileName = file.FileName, conversations = conversations.Count });
             }
             catch (Exception ex)

@@ -1,11 +1,13 @@
 using ChatGPTcorpus.Services;
 using ChatGPTcorpus.Models;
+using ChatGPTcorpus.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,9 +15,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddEndpointsApiExplorer();
 
+// Add DbContext
+builder.Services.AddDbContext<KorpusDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 // Register custom services
 builder.Services.AddSingleton<ZipService>();
-builder.Services.AddSingleton<ImportService>(sp => new ImportService(System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "Data")));
+builder.Services.AddScoped<ImportService>(sp => 
+    new ImportService(
+        System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "Data"),
+        sp.GetRequiredService<KorpusDbContext>()
+    ));
 builder.Services.AddSingleton<SearchServiceProvider>(); // Helper for in-memory conversations
 
 // Allow very large uploads
@@ -50,6 +60,13 @@ app.UseAuthorization();
 app.UseCors();
 
 app.MapControllers();
+
+// Ensure database is created and migrations are applied
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<KorpusDbContext>();
+    dbContext.Database.Migrate();
+}
 
 app.Run();
 

@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
-using ChatGPTcorpus.Services;
 using ChatGPTcorpus.Models;
+using ChatGPTcorpus.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
-using System.IO;
+using System.Threading.Tasks;
 
 namespace ChatGPTcorpus.Controllers
 {
@@ -11,80 +12,66 @@ namespace ChatGPTcorpus.Controllers
     [Route("api/[controller]")]
     public class SearchController : ControllerBase
     {
-        private readonly SearchServiceProvider _searchProvider;
+        private readonly KorpusDbContext _dbContext;
 
-        public SearchController(SearchServiceProvider searchProvider)
+        public SearchController(KorpusDbContext dbContext)
         {
-            _searchProvider = searchProvider;
+            _dbContext = dbContext;
         }
 
         [HttpGet]
         [Route("")]
-        public IActionResult Search([FromQuery] string q)
+        public async Task<IActionResult> Search([FromQuery] string q)
         {
             if (string.IsNullOrWhiteSpace(q))
                 return BadRequest(new { error = "Query parameter 'q' is required." });
 
-            var conversations = _searchProvider.Conversations;
-            if (conversations == null || !conversations.Any())
-                return Ok(new { results = Array.Empty<object>(), message = "No conversations loaded." });
-
-            var searchService = new SearchService(conversations);
-            var results = searchService.Search(q)
-                .Select(r => new {
-                    conversationId = r.Conversation.Id,
-                    conversationTitle = r.Conversation.Title,
-                    messageId = r.Message.Id,
-                    author = r.Message.Author,
-                    content = r.Message.Content,
-                    createTime = r.Message.CreateTime
+            var results = await _dbContext.Messages
+                .Include(m => m.Conversation)
+                .Where(m => m.Content.ToLower().Contains(q.ToLower()) || m.Author.ToLower().Contains(q.ToLower()))
+                .Select(m => new {
+                    conversationId = m.ConversationId,
+                    conversationTitle = m.Conversation.Title,
+                    messageId = m.Id,
+                    author = m.Author,
+                    content = m.Content,
+                    createTime = m.CreateTime
                 })
-                .ToList();
+                .ToListAsync();
 
-            return Ok(new { results });
+            // Calculate statistics
+            var totalMatches = results.Count;
+            var agentMatches = results.Count(r => r.author.ToLower() == "assistant");
+            var userMatches = results.Count(r => r.author.ToLower() == "user");
+            var uniqueMessages = results.Select(r => r.messageId).Distinct().Count();
+            var wordOccurrences = results.Sum(r => 
+                r.content.ToLower().Split(new[] { ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Count(word => word.Contains(q.ToLower())));
+            
+            // Get total message count from corpus
+            var totalMessagesInCorpus = await _dbContext.Messages.CountAsync();
+
+            return Ok(new { 
+                results,
+                stats = new {
+                    totalMatches,
+                    agentMatches,
+                    userMatches,
+                    uniqueMessages,
+                    wordOccurrences,
+                    totalMessagesInCorpus
+                }
+            });
         }
 
         [HttpGet]
         [Route("stats")]
-        public IActionResult Stats()
+        public async Task<IActionResult> Stats()
         {
-            string rawConvPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "RawConversations");
-            int contributionCount = Directory.Exists(rawConvPath) ? Directory.GetDirectories(rawConvPath).Length : 0;
-            int conversationCount = 0;
-            int messageCount = 0;
+            var contributionCount = await _dbContext.Conversations.Select(c => c.Author).Distinct().CountAsync();
+            var conversationCount = await _dbContext.Conversations.CountAsync();
+            var messageCount = await _dbContext.Messages.CountAsync();
 
-            if (Directory.Exists(rawConvPath))
-            {
-                var dirs = Directory.GetDirectories(rawConvPath);
-                foreach (var dir in dirs)
-                {
-                    var convFile = Path.Combine(dir, "conversations.json");
-                    if (System.IO.File.Exists(convFile))
-                    {
-                        try
-                        {
-                            var json = System.IO.File.ReadAllText(convFile);
-                            var conversations = System.Text.Json.JsonSerializer.Deserialize<List<ChatGPTcorpus.Models.Conversation>>(json);
-                            if (conversations != null)
-                            {
-                                conversationCount += conversations.Count;
-                                foreach (var conv in conversations)
-                                {
-                                    int msgCount = conv.Messages != null ? conv.Messages.Count : 0;
-                                    messageCount += msgCount;
-                                    Console.WriteLine($"Conversation: {conv.Title}, Messages: {msgCount}");
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Failed to read {convFile}: {ex.Message}");
-                        }
-                    }
-                }
-            }
-
-            Console.WriteLine($"Stats endpoint called - Contributions: {contributionCount}, Conversations: {conversationCount}, Messages: {messageCount}");
             return Ok(new {
                 contributions = contributionCount,
                 conversations = conversationCount,

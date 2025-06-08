@@ -34,7 +34,7 @@ namespace ChatGPTcorpus.Models
         public DateTime CreateTime { get; set; }
         public string Content { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
-        public object EndTurn { get; set; } = null;
+        public object? EndTurn { get; set; } = null;
         public int Weight { get; set; }
         public Dictionary<string, object> Metadata { get; set; } = new Dictionary<string, object>();
         public string Recipient { get; set; } = string.Empty;

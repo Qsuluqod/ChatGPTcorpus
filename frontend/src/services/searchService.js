@@ -12,6 +12,7 @@ export async function searchConversations(query) {
     return {
       success: true,
       results: data.results || [],
+      stats: data.stats || null,
       error: null
     };
   } catch (error) {
@@ -19,6 +20,7 @@ export async function searchConversations(query) {
     return {
       success: false,
       results: [],
+      stats: null,
       error: error.message || 'Failed to search conversations'
     };
   }
