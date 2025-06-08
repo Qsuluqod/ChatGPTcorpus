@@ -41,7 +41,6 @@
 /home/mprokopic/Prog/ChatGPTcorpus/backend/obj/Debug/net8.0/staticwebassets.pack.json
 /home/mprokopic/Prog/ChatGPTcorpus/backend/obj/Debug/net8.0/scopedcss/bundle/ChatGPTcorpus.styles.css
 /home/mprokopic/Prog/ChatGPTcorpus/backend/obj/Debug/net8.0/MvcTestingAppManifest.json
-/home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/Data/RawConversations/data_test/conversations.json
 /home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/MvcTestingAppManifest.json
 /home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/xunit.runner.visualstudio.dotnetcore.testadapter.dll
 /home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/xunit.runner.reporters.netcoreapp10.dll
