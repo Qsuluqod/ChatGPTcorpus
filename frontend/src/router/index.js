@@ -4,6 +4,7 @@ import ContributeView from '../views/ContributeView.vue'
 import CorpusInfoView from '../views/CorpusInfoView.vue'
 import ConversationView from '../views/ConversationView.vue'
 import LoginView from '../views/LoginView.vue'
+import HomeView from '../views/HomeView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,7 +16,8 @@ const router = createRouter({
     },
     {
       path: '/',
-      redirect: '/search'
+      name: 'home',
+      component: HomeView
     },
     {
       path: '/search',
