@@ -3,10 +3,16 @@ import SearchView from '../views/SearchView.vue'
 import ContributeView from '../views/ContributeView.vue'
 import CorpusInfoView from '../views/CorpusInfoView.vue'
 import ConversationView from '../views/ConversationView.vue'
+import LoginView from '../views/LoginView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView
+    },
     {
       path: '/',
       redirect: '/search'
@@ -34,4 +40,15 @@ const router = createRouter({
   ]
 })
 
-export default router 
+router.beforeEach((to, from, next) => {
+  const required = import.meta.env.VITE_ACCESS_PASSPHRASE
+  if (required && to.name === 'search') {
+    const authenticated = localStorage.getItem('authenticated') === 'true'
+    if (!authenticated) {
+      return next({ name: 'login' })
+    }
+  }
+  next()
+})
+
+export default router
