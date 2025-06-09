@@ -33,6 +33,7 @@ const checkPassphrase = () => {
   const required = import.meta.env.VITE_ACCESS_PASSPHRASE
   if (input.value === required) {
     localStorage.setItem('authenticated', 'true')
+    localStorage.setItem('accessPassphrase', input.value)
     router.replace({ name: 'search' })
   } else {
     error.value = 'Invalid passphrase'

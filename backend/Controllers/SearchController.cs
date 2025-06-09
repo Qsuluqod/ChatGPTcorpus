@@ -13,16 +13,38 @@ namespace ChatGPTcorpus.Controllers
     public class SearchController : ControllerBase
     {
         private readonly KorpusDbContext _dbContext;
+        private readonly IConfiguration _configuration;
 
-        public SearchController(KorpusDbContext dbContext)
+        public SearchController(KorpusDbContext dbContext, IConfiguration configuration)
         {
             _dbContext = dbContext;
+            _configuration = configuration;
+        }
+
+        private bool IsAuthorized()
+        {
+            var required = _configuration["AccessPassphrase"];
+            if (string.IsNullOrEmpty(required))
+            {
+                // No passphrase required
+                return true;
+            }
+
+            if (Request.Headers.TryGetValue("X-Access-Passphrase", out var provided))
+            {
+                return provided == required;
+            }
+
+            return false;
         }
 
         [HttpGet]
         [Route("")]
         public async Task<IActionResult> Search([FromQuery] string q)
         {
+            if (!IsAuthorized())
+                return Unauthorized(new { error = "Invalid or missing passphrase" });
+
             if (string.IsNullOrWhiteSpace(q))
                 return BadRequest(new { error = "Query parameter 'q' is required." });
 
@@ -68,6 +90,9 @@ namespace ChatGPTcorpus.Controllers
         [Route("stats")]
         public async Task<IActionResult> Stats()
         {
+            if (!IsAuthorized())
+                return Unauthorized(new { error = "Invalid or missing passphrase" });
+
             var contributionCount = await _dbContext.Conversations.Select(c => c.Author).Distinct().CountAsync();
             var conversationCount = await _dbContext.Conversations.CountAsync();
             var messageCount = await _dbContext.Messages.CountAsync();

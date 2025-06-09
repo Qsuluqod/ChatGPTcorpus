@@ -2,7 +2,12 @@ const API_BASE_URL = '/api';
 
 export async function fetchCorpusStats() {
   try {
-    const response = await fetch(`${API_BASE_URL}/search/stats`);
+    const passphrase = localStorage.getItem('accessPassphrase') || ''
+    const response = await fetch(`${API_BASE_URL}/search/stats`, {
+      headers: {
+        'X-Access-Passphrase': passphrase
+      }
+    });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
