@@ -9,6 +9,13 @@
         </div>
         <div class="flex space-x-4">
           <router-link
+            to="/"
+            class="text-white/90 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:bg-white/10"
+            :class="{ 'bg-white/20 text-white shadow-[0_0_15px_rgba(255,255,255,0.5)]': $route.path === '/' }"
+          >
+            Home
+          </router-link>
+          <router-link
             to="/search"
             class="text-white/90 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:bg-white/10"
             :class="{ 'bg-white/20 text-white shadow-[0_0_15px_rgba(255,255,255,0.5)]': $route.path === '/search' }"
