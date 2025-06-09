@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-from to-primary-to p-4">
+  <div class="min-h-screen flex items-center justify-center bg-white p-4">
     <form
       @submit.prevent="checkPassphrase"
       class="bg-white/90 backdrop-blur-xl border-2 border-primary-from rounded-xl shadow-xl p-8 space-y-6 w-full max-w-md"
