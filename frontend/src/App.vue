@@ -8,7 +8,7 @@ const route = useRoute()
 <template>
   <div class="bg-white flex flex-col min-h-screen">
     <Navbar v-if="route.name !== 'login'" />
-    <main :class="route.name !== 'login' ? 'pt-16 flex-1 flex flex-col' : 'flex-1 flex flex-col'">
+    <main :class="route.name !== 'login' ? 'pt-16 flex flex-col min-h-[calc(100vh-4rem)]' : 'flex flex-col min-h-screen'">
       <router-view />
     </main>
   </div>
