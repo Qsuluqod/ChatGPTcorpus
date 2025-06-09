@@ -1,6 +1,16 @@
 <template>
   <div class="w-[900px] mx-auto px-4 py-8">
     <div class="space-y-6">
+      <div class="bg-white/80 backdrop-blur border-2 border-primary-from rounded-lg p-6 space-y-4">
+        <h1 class="text-2xl font-bold text-gray-900">How to export your ChatGPT history</h1>
+        <ol class="list-decimal list-inside text-left text-gray-700 space-y-1">
+          <li>Open ChatGPT and navigate to <strong>Settings &gt; Data Controls</strong>.</li>
+          <li>Select <strong>Export</strong> and confirm to request your data.</li>
+          <li>When you receive the email, download the provided ZIP file.</li>
+          <li>Upload that ZIP using the form below.</li>
+        </ol>
+        <p class="text-sm text-gray-500">All files are anonymized before becoming part of the public corpus.</p>
+      </div>
       <div
         class="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center bg-gray-50/50 hover:border-primary-from transition-colors duration-200 w-full"
         :class="{ 'border-primary-from bg-primary-from/5 shadow-[0_0_15px_rgba(168,85,247,0.3)]': isDragging }"
