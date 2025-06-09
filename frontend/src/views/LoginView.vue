@@ -1,14 +1,21 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <form @submit.prevent="checkPassphrase" class="bg-white p-6 rounded shadow space-y-4 w-80">
-      <h1 class="text-xl font-semibold text-center">Enter Passphrase</h1>
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-from to-primary-to p-4">
+    <form
+      @submit.prevent="checkPassphrase"
+      class="bg-white/90 backdrop-blur-xl border-2 border-primary-from rounded-xl shadow-xl p-8 space-y-6 w-full max-w-md"
+    >
+      <h1 class="text-2xl font-bold text-center text-gray-900">Enter Passphrase</h1>
+      <p class="text-center text-gray-700 text-sm">
+        This project is temporarily open only to contributors. If you have contributed,
+        please contact the author to obtain a valid passphrase.
+      </p>
       <input
         v-model="input"
         type="password"
         placeholder="Passphrase"
-        class="w-full border px-3 py-2 rounded"
+        class="input bg-white"
       />
-      <p v-if="error" class="text-red-600 text-sm">{{ error }}</p>
+      <p v-if="error" class="text-red-600 text-sm text-center">{{ error }}</p>
       <button type="submit" class="w-full btn-primary">Enter</button>
     </form>
   </div>
