@@ -1,11 +1,14 @@
 <script setup>
 import Navbar from './components/Navbar.vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 </script>
 
 <template>
-  <div class="bg-white flex flex-col">
-    <Navbar />
-    <main class="pt-16 flex-1 flex flex-col">
+  <div class="bg-white flex flex-col min-h-screen">
+    <Navbar v-if="route.name !== 'login'" />
+    <main :class="route.name !== 'login' ? 'pt-16 flex-1 flex flex-col' : 'flex-1 flex flex-col'">
       <router-view />
     </main>
   </div>
