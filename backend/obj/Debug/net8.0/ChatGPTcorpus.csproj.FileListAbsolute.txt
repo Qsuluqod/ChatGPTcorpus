@@ -16,15 +16,6 @@
 /home/mprokopic/Prog/ChatGPTcorpus/backend/obj/Debug/net8.0/ChatGPTcorpus.pdb
 /home/mprokopic/Prog/ChatGPTcorpus/backend/obj/Debug/net8.0/ChatGPTcorpus.genruntimeconfig.cache
 /home/mprokopic/Prog/ChatGPTcorpus/backend/obj/Debug/net8.0/ref/ChatGPTcorpus.dll
-/home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/Data/unzipped/data1/conversations.json
-/home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/Data/unzipped/data1/conversations_head1000.json
-/home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/Data/unzipped/data1/message_feedback.json
-/home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/Data/unzipped/data1/shared_conversations.json
-/home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/Data/unzipped/data1/user.json
-/home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/Data/unzipped/user1/conversations.json
-/home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/Data/unzipped/user1/message_feedback.json
-/home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/Data/unzipped/user1/shared_conversations.json
-/home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/Data/unzipped/user1/user.json
 /home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/Microsoft.AspNetCore.JsonPatch.dll
 /home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/Microsoft.AspNetCore.Mvc.NewtonsoftJson.dll
 /home/mprokopic/Prog/ChatGPTcorpus/backend/bin/Debug/net8.0/Microsoft.AspNetCore.OpenApi.dll

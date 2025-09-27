@@ -26,4 +26,15 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
   </ItemGroup>
 
-</Project> 
+  <ItemGroup>
+    <Content Remove="Data/RawConversations/**" />
+    <None Remove="Data/RawConversations/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Data/RawConversations/**">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

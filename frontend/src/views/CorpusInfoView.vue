@@ -7,7 +7,7 @@
       </div>
       <div v-if="loading" class="text-gray-500 text-lg py-8 text-center">Loading...</div>
       <div v-else-if="!statsLoaded" class="text-gray-400 text-lg py-8 text-center">No data available.</div>
-      <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div v-else class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="card p-6 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col items-center">
           <span class="stat-number">{{ stats.contributions || 0 }}</span>
           <span class="stat-label">Contributions</span>
@@ -19,6 +19,10 @@
         <div class="card p-6 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col items-center">
           <span class="stat-number">{{ stats.messages || 0 }}</span>
           <span class="stat-label">Messages</span>
+        </div>
+        <div class="card p-6 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col items-center">
+          <span class="stat-number">{{ stats.uploads || 0 }}</span>
+          <span class="stat-label">Uploads</span>
         </div>
       </div>
     </div>
@@ -32,7 +36,8 @@ import { fetchCorpusStats } from '../services/corpusInfoService'
 const stats = ref({
   contributions: 0,
   conversations: 0,
-  messages: 0
+  messages: 0,
+  uploads: 0
 })
 const loading = ref(true)
 const statsLoaded = ref(false)

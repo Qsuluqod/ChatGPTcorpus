@@ -96,12 +96,14 @@ namespace ChatGPTcorpus.Controllers
             var contributionCount = await _dbContext.Conversations.Select(c => c.Author).Distinct().CountAsync();
             var conversationCount = await _dbContext.Conversations.CountAsync();
             var messageCount = await _dbContext.Messages.CountAsync();
+            var uploadCount = await _dbContext.Conversations.Select(c => c.ImportBatchId).Distinct().CountAsync();
 
             return Ok(new {
                 contributions = contributionCount,
                 conversations = conversationCount,
-                messages = messageCount
+                messages = messageCount,
+                uploads = uploadCount
             });
         }
     }
-} 
+}

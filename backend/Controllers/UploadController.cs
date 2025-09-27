@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using ChatGPTcorpus.Services;
 using System;
 using System.Text.Json;
+using System.Collections.Generic;
+using Microsoft.Extensions.Hosting;
 
 namespace ChatGPTcorpus.Controllers
 {
@@ -15,11 +17,13 @@ namespace ChatGPTcorpus.Controllers
     {
         private readonly ZipService _zipService;
         private readonly ImportService _importService;
+        private readonly IHostEnvironment _hostEnvironment;
 
-        public UploadController(ZipService zipService, ImportService importService)
+        public UploadController(ZipService zipService, ImportService importService, IHostEnvironment hostEnvironment)
         {
             _zipService = zipService;
             _importService = importService;
+            _hostEnvironment = hostEnvironment;
         }
 
         [HttpPost]
@@ -39,7 +43,7 @@ namespace ChatGPTcorpus.Controllers
 
             // Extract ZIP to the backend's Data/unzipped/{userId} directory
             var userId = Path.GetFileNameWithoutExtension(file.FileName); // crude userId from filename
-            var extractPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "unzipped", userId);
+            var extractPath = Path.Combine(_hostEnvironment.ContentRootPath, "Data", "unzipped", userId);
             try
             {
                 _zipService.ExtractZip(tempPath, extractPath);
@@ -49,9 +53,10 @@ namespace ChatGPTcorpus.Controllers
                 {
                     metadataDict = JsonSerializer.Deserialize<Dictionary<string, object>>(metadata) ?? new Dictionary<string, object>();
                 }
+                var importBatchId = Guid.NewGuid().ToString("N");
                 // Import conversations and save to database
-                var conversations = await _importService.ImportConversationsAsync(userId, metadataDict ?? new Dictionary<string, object>());
-                return Ok(new { message = "File uploaded and conversations loaded!", fileName = file.FileName, conversations = conversations.Count });
+                var conversations = await _importService.ImportConversationsAsync(userId, importBatchId, metadataDict ?? new Dictionary<string, object>());
+                return Ok(new { message = "File uploaded and conversations loaded!", fileName = file.FileName, conversations = conversations.Count, uploadId = importBatchId });
             }
             catch (Exception ex)
             {

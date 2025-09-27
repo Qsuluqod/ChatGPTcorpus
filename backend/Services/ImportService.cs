@@ -23,7 +23,7 @@ namespace ChatGPTcorpus.Services
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
-        public async Task<List<Conversation>> ImportConversationsAsync(string userId, Dictionary<string, object>? metadata = null)
+        public async Task<List<Conversation>> ImportConversationsAsync(string userId, string importBatchId, Dictionary<string, object>? metadata = null)
         {
             try
             {
@@ -55,7 +55,8 @@ namespace ChatGPTcorpus.Services
                             conversations.Add(conversation);
                             
                             // Convert to database model and save
-                            var dbConversation = ConvertToDbModel(conversation, metadata ?? new Dictionary<string, object>());
+                            conversation.ImportBatchId = importBatchId;
+                            var dbConversation = ConvertToDbModel(conversation, importBatchId, metadata ?? new Dictionary<string, object>());
                             await SaveConversationToDatabaseAsync(dbConversation);
                         }
                     }
@@ -86,24 +87,13 @@ namespace ChatGPTcorpus.Services
         {
             try
             {
-                // Check if conversation already exists
-                var existingConversation = await _dbContext.Conversations
-                    .Include(c => c.Messages)
-                    .FirstOrDefaultAsync(c => c.Id == conversation.Id);
+                // Ensure we always replace existing data so repeated imports stay consistent.
+                await _dbContext.Conversations
+                    .Where(c => c.Id == conversation.Id)
+                    .ExecuteDeleteAsync();
 
-                if (existingConversation != null)
-                {
-                    // Update existing conversation
-                    _dbContext.Entry(existingConversation).CurrentValues.SetValues(conversation);
-                    
-                    // Remove existing messages
-                    _dbContext.Messages.RemoveRange(existingConversation.Messages);
-                }
-                else
-                {
-                    // Add new conversation
-                    await _dbContext.Conversations.AddAsync(conversation);
-                }
+                // Add fresh snapshot of the conversation and its messages.
+                await _dbContext.Conversations.AddAsync(conversation);
 
                 // Save changes
                 await _dbContext.SaveChangesAsync();
@@ -161,7 +151,7 @@ namespace ChatGPTcorpus.Services
             return DateTime.SpecifyKind(dt, DateTimeKind.Utc);
         }
 
-        private DbConversation ConvertToDbModel(Conversation conversation, Dictionary<string, object> metadata)
+        private DbConversation ConvertToDbModel(Conversation conversation, string importBatchId, Dictionary<string, object> metadata)
         {
             var dbConversation = new DbConversation
             {
@@ -170,6 +160,7 @@ namespace ChatGPTcorpus.Services
                 CreateTime = ToUtc(conversation.CreateTime),
                 UpdateTime = ToUtc(conversation.UpdateTime),
                 Author = conversation.Author,
+                ImportBatchId = importBatchId,
                 IsSingleUser = conversation.IsSingleUser,
                 Gender = conversation.Gender,
                 AgeCategory = conversation.AgeCategory,

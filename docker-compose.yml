@@ -1,22 +1,55 @@
-version: '3.8'
-
 services:
-  postgres:
-    image: postgres:16
-    container_name: chatgptcorpus-db
+  db:
+    image: postgres:15
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: chatgptcorpus
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:${BACKEND_PORT}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      AccessPassphrase: ${ACCESS_PASSPHRASE}
+    volumes:
+      - ./backend/Data:/app/Data:Z
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      FRONTEND_PORT: ${FRONTEND_PORT}
+      VITE_API_URL: ${VITE_API_URL}
+      VITE_ACCESS_PASSPHRASE: ${VITE_ACCESS_PASSPHRASE}
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+
 volumes:
-  postgres_data:
+  db_data:

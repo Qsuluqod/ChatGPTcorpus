@@ -5,11 +5,24 @@ using System.Linq;
 using System.Text.Json;
 using System.Collections.Generic;
 using ChatGPTcorpus.Models;
+using Microsoft.Extensions.Hosting;
 
 namespace ChatGPTcorpus.Services
 {
     public class ZipService
     {
+        private readonly string _contentRootPath;
+
+        public ZipService(IHostEnvironment hostEnvironment)
+        {
+            if (hostEnvironment == null)
+            {
+                throw new ArgumentNullException(nameof(hostEnvironment));
+            }
+
+            _contentRootPath = hostEnvironment.ContentRootPath;
+        }
+
         public void ExtractZip(string zipPath, string extractPath)
         {
             Console.WriteLine($"Attempting to extract ZIP file from: {zipPath}");
@@ -36,7 +49,7 @@ namespace ChatGPTcorpus.Services
 
                 // Move conversations.json to Data/RawConversations/{userId}/conversations.json
                 var userId = Path.GetFileName(extractPath);
-                var rawConvDir = Path.Combine(Directory.GetCurrentDirectory(), "Data", "RawConversations", userId);
+                var rawConvDir = Path.Combine(_contentRootPath, "Data", "RawConversations", userId);
                 Directory.CreateDirectory(rawConvDir);
                 var destConvFile = Path.Combine(rawConvDir, "conversations.json");
                 if (File.Exists(destConvFile)) File.Delete(destConvFile);

@@ -3,6 +3,7 @@ using System;
 using ChatGPTcorpus.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ChatGPTcorpus.Migrations
 {
     [DbContext(typeof(KorpusDbContext))]
-    partial class KorpusDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250926153808_AddImportBatchId")]
+    partial class AddImportBatchId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

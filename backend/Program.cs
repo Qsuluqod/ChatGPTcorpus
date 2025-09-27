@@ -5,25 +5,41 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+var configuration = builder.Configuration;
 
 // Add services to the container
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddEndpointsApiExplorer();
 
 // Add DbContext
+var connectionString = configuration.GetConnectionString("Default");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    var dbHost = configuration["DB_HOST"] ?? configuration["POSTGRES_HOST"] ?? "db";
+    var dbPort = configuration["DB_PORT"] ?? "5432";
+    var dbName = configuration["DB_NAME"] ?? configuration["POSTGRES_DB"] ?? "app";
+    var dbUser = configuration["DB_USER"] ?? configuration["POSTGRES_USER"] ?? "app";
+    var dbPassword = configuration["DB_PASSWORD"] ?? configuration["POSTGRES_PASSWORD"] ?? "app";
+
+    connectionString = $"Host={dbHost};Port={dbPort};Database={dbName};Username={dbUser};Password={dbPassword}";
+}
+
 builder.Services.AddDbContext<KorpusDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 
 // Register custom services
 builder.Services.AddSingleton<ZipService>();
 builder.Services.AddScoped<ImportService>(sp => 
     new ImportService(
-        System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "Data"),
+        System.IO.Path.Combine(builder.Environment.ContentRootPath, "Data"),
         sp.GetRequiredService<KorpusDbContext>()
     ));
 builder.Services.AddSingleton<SearchServiceProvider>(); // Helper for in-memory conversations
@@ -35,11 +51,31 @@ builder.Services.Configure<FormOptions>(options =>
 });
 
 // Add CORS configuration
+var configuredOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+
+if (configuredOrigins.Length == 0)
+{
+    var originsFromEnv = configuration["CORS_ORIGINS"];
+    if (!string.IsNullOrWhiteSpace(originsFromEnv))
+    {
+        configuredOrigins = originsFromEnv
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(origin => origin.Trim())
+            .Where(origin => !string.IsNullOrWhiteSpace(origin))
+            .ToArray();
+    }
+}
+
+if (configuredOrigins.Length == 0)
+{
+    configuredOrigins = new[] { "http://localhost:5173", "http://localhost:5174" };
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
+        policy.WithOrigins(configuredOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });

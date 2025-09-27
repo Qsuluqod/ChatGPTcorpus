@@ -11,6 +11,7 @@ namespace ChatGPTcorpus.Models
         public DateTime UpdateTime { get; set; }
         public Dictionary<string, Message> Messages { get; set; } = new Dictionary<string, Message>();
         public string Author { get; set; } = string.Empty;
+        public string ImportBatchId { get; set; } = string.Empty;
         public bool IsSingleUser { get; set; } = false;
         public string Gender { get; set; } = string.Empty;
         public string AgeCategory { get; set; } = string.Empty;

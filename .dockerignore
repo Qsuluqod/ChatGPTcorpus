@@ -1,0 +1,11 @@
+# Exclude local build artefacts and Vite deps from Docker context
+backend/bin
+backend/obj
+backend/TestResults
+frontend/node_modules
+frontend/dist
+
+# Misc
+.git
+.gitignore
+.env

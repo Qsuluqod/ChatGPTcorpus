@@ -22,7 +22,10 @@ namespace ChatGPTcorpus.Models
         
         [Required]
         public string Author { get; set; } = string.Empty;
-        
+
+        [Required]
+        public string ImportBatchId { get; set; } = string.Empty;
+
         public bool IsSingleUser { get; set; }
         
         public string? Gender { get; set; }

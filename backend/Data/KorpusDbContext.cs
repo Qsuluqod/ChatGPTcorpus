@@ -21,6 +21,7 @@ namespace ChatGPTcorpus.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Title).IsRequired();
                 entity.Property(e => e.Author).IsRequired();
+                entity.Property(e => e.ImportBatchId).IsRequired();
                 entity.Property(e => e.CreateTime).IsRequired();
                 entity.Property(e => e.UpdateTime).IsRequired();
                 
