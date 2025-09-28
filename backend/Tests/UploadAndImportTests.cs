@@ -63,7 +63,6 @@ namespace ChatGPTcorpus.Tests
 
             // Check that the imported conversations are correct
             var stats = await GetStatsAsync(client);
-            Assert.True(stats["contributions"]?.Value<int>() > 0);
             Assert.True(stats["messages"]?.Value<int>() > 0);
             Assert.True(stats["uploads"]?.Value<int>() > 0);
         }

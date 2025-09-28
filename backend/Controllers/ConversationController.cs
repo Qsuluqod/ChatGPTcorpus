@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using ChatGPTcorpus.Models;
 using ChatGPTcorpus.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -19,7 +20,7 @@ namespace ChatGPTcorpus.Controllers
         }
 
         [HttpGet("{conversationId}")]
-        public async Task<IActionResult> GetConversation(string conversationId)
+        public async Task<IActionResult> GetConversation(string conversationId, [FromQuery] int? messageSequence)
         {
             var conversation = await _dbContext.Conversations
                 .Include(c => c.Messages)
@@ -27,6 +28,14 @@ namespace ChatGPTcorpus.Controllers
 
             if (conversation == null)
                 return NotFound(new { error = "Conversation not found." });
+
+            IEnumerable<DbMessage> messagesQuery = conversation.Messages
+                .OrderBy(m => m.Sequence)
+                .ThenBy(m => m.CreateTime);
+
+            var highlightedMessage = messageSequence.HasValue
+                ? messagesQuery.FirstOrDefault(m => m.Sequence == messageSequence.Value)
+                : null;
 
             // Project to a shape suitable for the frontend
             return Ok(new {
@@ -41,11 +50,12 @@ namespace ChatGPTcorpus.Controllers
                 educationLevel = conversation.EducationLevel,
                 currentRegion = conversation.CurrentRegion,
                 childhoodRegion = conversation.ChildhoodRegion,
-                messages = conversation.Messages
-                    .OrderBy(m => m.CreateTime)
+                highlightedMessageId = highlightedMessage?.Id,
+                messages = messagesQuery
                     .Select(m => new {
                         id = m.Id,
                         author = m.Author,
+                        sequence = m.Sequence,
                         createTime = m.CreateTime,
                         content = m.Content,
                         status = m.Status,

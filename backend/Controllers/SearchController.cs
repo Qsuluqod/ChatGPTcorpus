@@ -40,47 +40,122 @@ namespace ChatGPTcorpus.Controllers
 
         [HttpGet]
         [Route("")]
-        public async Task<IActionResult> Search([FromQuery] string q)
+        public async Task<IActionResult> Search(
+            [FromQuery] string? q,
+            [FromQuery] int? messageSequence,
+            [FromQuery] int? messageSequenceMin,
+            [FromQuery] int? messageSequenceMax,
+            [FromQuery] int? maxPerImportBatch,
+            [FromQuery] bool includeAll = false)
         {
             if (!IsAuthorized())
                 return Unauthorized(new { error = "Invalid or missing passphrase" });
 
-            if (string.IsNullOrWhiteSpace(q))
+            var queryText = q ?? string.Empty;
+
+            if (!includeAll && string.IsNullOrWhiteSpace(queryText))
                 return BadRequest(new { error = "Query parameter 'q' is required." });
 
-            var results = await _dbContext.Messages
+            if (messageSequenceMin.HasValue && messageSequenceMin <= 0)
+                return BadRequest(new { error = "Parameter 'messageSequenceMin' must be greater than 0." });
+
+            if (messageSequenceMax.HasValue && messageSequenceMax <= 0)
+                return BadRequest(new { error = "Parameter 'messageSequenceMax' must be greater than 0." });
+
+            if (!messageSequence.HasValue && messageSequenceMin.HasValue && messageSequenceMax.HasValue && messageSequenceMin > messageSequenceMax)
+                return BadRequest(new { error = "'messageSequenceMin' cannot be greater than 'messageSequenceMax'." });
+
+            if (maxPerImportBatch.HasValue && maxPerImportBatch <= 0)
+                return BadRequest(new { error = "Parameter 'maxPerImportBatch' must be greater than 0." });
+
+            var messageQuery = _dbContext.Messages
                 .Include(m => m.Conversation)
-                .Where(m => m.Content.ToLower().Contains(q.ToLower()) || m.Author.ToLower().Contains(q.ToLower()))
+                .AsQueryable();
+
+            if (!includeAll)
+            {
+                var loweredQuery = queryText.ToLower();
+                messageQuery = messageQuery.Where(m => m.Content.ToLower().Contains(loweredQuery) || m.Author.ToLower().Contains(loweredQuery));
+            }
+
+            if (messageSequence.HasValue)
+            {
+                messageQuery = messageQuery.Where(m => m.Sequence == messageSequence.Value);
+            }
+            else
+            {
+                if (messageSequenceMin.HasValue)
+                {
+                    messageQuery = messageQuery.Where(m => m.Sequence >= messageSequenceMin.Value);
+                }
+
+                if (messageSequenceMax.HasValue)
+                {
+                    messageQuery = messageQuery.Where(m => m.Sequence <= messageSequenceMax.Value);
+                }
+            }
+
+            var rawResults = await messageQuery
                 .Select(m => new {
                     conversationId = m.ConversationId,
                     conversationTitle = m.Conversation.Title,
                     messageId = m.Id,
                     author = m.Author,
                     content = m.Content,
-                    createTime = m.CreateTime
+                    createTime = m.CreateTime,
+                    sequence = m.Sequence,
+                    importBatchId = m.Conversation.ImportBatchId
                 })
                 .ToListAsync();
 
+            var results = rawResults;
+
+            if (maxPerImportBatch.HasValue)
+            {
+                results = rawResults
+                    .GroupBy(r => r.importBatchId ?? string.Empty)
+                    .SelectMany(group => group
+                        .OrderBy(_ => Guid.NewGuid())
+                        .Take(maxPerImportBatch.Value))
+                    .ToList();
+            }
+
             // Calculate statistics
             var totalMatches = results.Count;
-            var agentMatches = results.Count(r => r.author.ToLower() == "assistant");
-            var userMatches = results.Count(r => r.author.ToLower() == "user");
+            var agentMatches = results.Count(r => string.Equals(r.author, "assistant", StringComparison.OrdinalIgnoreCase));
+            var userMatches = results.Count(r => string.Equals(r.author, "user", StringComparison.OrdinalIgnoreCase));
+            var otherMatches = Math.Max(0, totalMatches - agentMatches - userMatches);
             var uniqueMessages = results.Select(r => r.messageId).Distinct().Count();
-            var wordOccurrences = results.Sum(r => 
-                r.content.ToLower().Split(new[] { ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Count(word => word.Contains(q.ToLower())));
+
+            int wordOccurrences = 0;
+            if (!includeAll && !string.IsNullOrWhiteSpace(queryText))
+            {
+                var loweredQuery = queryText.ToLower();
+                wordOccurrences = results.Sum(r =>
+                    r.content.ToLower().Split(new[] { ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Count(word => word.Contains(loweredQuery)));
+            }
             
             // Get total message count from corpus
             var totalMessagesInCorpus = await _dbContext.Messages.CountAsync();
 
             return Ok(new { 
-                results,
+                results = results.Select(r => new {
+                    r.conversationId,
+                    r.conversationTitle,
+                    r.messageId,
+                    r.author,
+                    r.content,
+                    r.createTime,
+                    r.sequence
+                }),
                 stats = new {
                     totalMatches,
                     agentMatches,
                     userMatches,
                     uniqueMessages,
                     wordOccurrences,
+                    otherMatches,
                     totalMessagesInCorpus
                 }
             });
@@ -93,13 +168,11 @@ namespace ChatGPTcorpus.Controllers
             if (!IsAuthorized())
                 return Unauthorized(new { error = "Invalid or missing passphrase" });
 
-            var contributionCount = await _dbContext.Conversations.Select(c => c.Author).Distinct().CountAsync();
             var conversationCount = await _dbContext.Conversations.CountAsync();
             var messageCount = await _dbContext.Messages.CountAsync();
             var uploadCount = await _dbContext.Conversations.Select(c => c.ImportBatchId).Distinct().CountAsync();
 
             return Ok(new {
-                contributions = contributionCount,
                 conversations = conversationCount,
                 messages = messageCount,
                 uploads = uploadCount

@@ -25,6 +25,7 @@ namespace ChatGPTcorpus.Services
 
             return _conversations
                 .SelectMany(conversation => conversation.Messages.Values
+                    .OrderBy(message => message.Sequence)
                     .Where(message => 
                         message.Content?.ToLowerInvariant().Contains(query) == true ||
                         message.Author?.ToLowerInvariant().Contains(query) == true)
@@ -56,6 +57,7 @@ namespace ChatGPTcorpus.Services
 
             return _conversations
                 .SelectMany(conversation => conversation.Messages.Values
+                    .OrderBy(message => message.Sequence)
                     .Where(message => message.Author?.ToLowerInvariant() == author)
                     .Select(message => (conversation, message)));
         }
@@ -64,6 +66,7 @@ namespace ChatGPTcorpus.Services
         {
             return _conversations
                 .SelectMany(conversation => conversation.Messages.Values
+                    .OrderBy(message => message.Sequence)
                     .Where(message => message.CreateTime >= startDate && message.CreateTime <= endDate)
                     .Select(message => (conversation, message)));
         }

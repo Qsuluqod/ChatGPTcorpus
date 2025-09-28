@@ -1,6 +1,6 @@
 <template>
-  <div class="max-w-6xl mx-auto px-4 py-8">
-    <div class="space-y-6">
+  <div class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full flex flex-col">
+    <div class="space-y-6 flex-1 flex flex-col">
       <!-- Header with back button -->
       <div class="fixed top-24 left-6 z-30 flex items-center gap-4" style="min-width: 260px;">
         <button
@@ -28,6 +28,7 @@
         >
           <div
             class="max-w-[70%] card p-6 flex flex-col gap-2 relative group"
+            :data-message-id="message.id"
             :class="[
               isUser(message)
                 ? 'bg-primary-from/10 text-primary-from rounded-br-2xl rounded-tl-2xl rounded-bl-2xl ml-8'
@@ -42,6 +43,7 @@
               </div>
               <div>
                 <p class="text-xs text-gray-500">{{ message.author }} • {{ formatDate(message.createTime) }}</p>
+                <p class="text-xs text-primary-from font-semibold">Turn {{ message.sequence }}</p>
               </div>
             </div>
             <div
@@ -73,16 +75,23 @@ const highlightedMessageId = ref(null)
 onMounted(async () => {
   const conversationId = route.params.conversationId
   const messageId = route.params.messageId
+  const sequenceValue = Number(route.query.sequence)
+  const options = {}
+  if (!Number.isNaN(sequenceValue) && sequenceValue > 0) {
+    options.messageSequence = sequenceValue
+  }
   
   try {
-    const result = await getConversation(conversationId)
+    const result = await getConversation(conversationId, options)
     if (result.success) {
       conversation.value = result.conversation
-      highlightedMessageId.value = messageId
+      const firstMessageId = result.conversation.messages?.[0]?.id ?? null
+      highlightedMessageId.value = messageId || firstMessageId
       
       // Scroll to the highlighted message
       setTimeout(() => {
-        const element = document.querySelector(`[data-message-id="${messageId}"]`)
+        if (!highlightedMessageId.value) return
+        const element = document.querySelector(`[data-message-id="${highlightedMessageId.value}"]`)
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'center' })
         }

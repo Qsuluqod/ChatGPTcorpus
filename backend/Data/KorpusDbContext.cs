@@ -39,6 +39,8 @@ namespace ChatGPTcorpus.Data
                 entity.Property(e => e.Content).IsRequired();
                 entity.Property(e => e.CreateTime).IsRequired();
                 entity.Property(e => e.Status).IsRequired();
+                entity.Property(e => e.Sequence).IsRequired();
+                entity.HasIndex(e => new { e.ConversationId, e.Sequence }).IsUnique();
                 
                 // Configure the relationship with conversation
                 entity.HasOne(e => e.Conversation)

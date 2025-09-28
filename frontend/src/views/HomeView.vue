@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-3xl mx-auto px-4 py-12 space-y-6">
+  <div class="max-w-3xl mx-auto px-4 py-12 space-y-6 flex-1 w-full flex flex-col justify-center">
     <div class="text-center space-y-4">
       <h1 class="text-4xl font-bold text-gray-900">Welcome to ChatGPT Corpus</h1>
       <p class="text-gray-700 text-lg">

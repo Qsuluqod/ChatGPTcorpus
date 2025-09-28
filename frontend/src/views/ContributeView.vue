@@ -1,6 +1,6 @@
 <template>
-  <div class="w-[900px] mx-auto px-4 py-8">
-    <div class="space-y-6">
+  <div class="max-w-3xl mx-auto px-4 py-8 flex-1 w-full flex flex-col">
+    <div class="space-y-6 flex-1 flex flex-col">
       <div class="bg-white/80 backdrop-blur border-2 border-primary-from rounded-lg p-6 space-y-4">
         <h1 class="text-2xl font-bold text-gray-900">How to export your ChatGPT history</h1>
         <ol class="list-decimal list-inside text-left text-gray-700 space-y-1">

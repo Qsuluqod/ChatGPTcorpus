@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-2xl mx-auto px-4 py-12 flex-1 flex flex-col justify-center">
+  <div class="max-w-2xl mx-auto px-4 py-12 flex-1 flex flex-col justify-center w-full">
     <div class="space-y-8">
       <div class="text-center">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Corpus Statistics</h1>
@@ -7,11 +7,7 @@
       </div>
       <div v-if="loading" class="text-gray-500 text-lg py-8 text-center">Loading...</div>
       <div v-else-if="!statsLoaded" class="text-gray-400 text-lg py-8 text-center">No data available.</div>
-      <div v-else class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="card p-6 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col items-center">
-          <span class="stat-number">{{ stats.contributions || 0 }}</span>
-          <span class="stat-label">Contributions</span>
-        </div>
+      <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="card p-6 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col items-center">
           <span class="stat-number">{{ stats.conversations || 0 }}</span>
           <span class="stat-label">Conversations</span>
@@ -34,7 +30,6 @@ import { ref, onMounted } from 'vue'
 import { fetchCorpusStats } from '../services/corpusInfoService'
 
 const stats = ref({
-  contributions: 0,
   conversations: 0,
   messages: 0,
   uploads: 0
@@ -58,9 +53,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-body, html {
-  overflow: hidden;
-}
 .stat-number {
   font-size: 2.5rem;
   font-weight: 700;

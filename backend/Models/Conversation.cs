@@ -33,6 +33,7 @@ namespace ChatGPTcorpus.Models
         public string Id { get; set; } = string.Empty;
         public string Author { get; set; } = string.Empty;
         public DateTime CreateTime { get; set; }
+        public int Sequence { get; set; }
         public string Content { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public object? EndTurn { get; set; } = null;

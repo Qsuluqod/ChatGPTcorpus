@@ -1,8 +1,13 @@
 import { api } from './api'
 
-export async function getConversation(conversationId) {
+export async function getConversation(conversationId, options = {}) {
   try {
-    const response = await api.get(`/conversations/${conversationId}`)
+    const params = {}
+    if (options.messageSequence !== undefined && options.messageSequence !== null) {
+      params.messageSequence = options.messageSequence
+    }
+
+    const response = await api.get(`/conversations/${conversationId}`, { params })
     return {
       success: true,
       conversation: response.data

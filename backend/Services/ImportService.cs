@@ -167,19 +167,24 @@ namespace ChatGPTcorpus.Services
                 EducationLevel = conversation.EducationLevel,
                 CurrentRegion = conversation.CurrentRegion,
                 ChildhoodRegion = conversation.ChildhoodRegion,
-                Messages = conversation.Messages.Values.Select(m => new DbMessage
-                {
-                    Id = m.Id,
-                    Author = m.Author,
-                    CreateTime = ToUtc(m.CreateTime),
-                    Content = m.Content,
-                    Status = m.Status,
-                    EndTurn = m.EndTurn?.ToString(),
-                    Weight = m.Weight,
-                    Metadata = m.Metadata,
-                    Recipient = m.Recipient,
-                    ConversationId = conversation.Id
-                }).ToList()
+                Messages = conversation.Messages.Values
+                    .OrderBy(m => m.Sequence)
+                    .ThenBy(m => m.CreateTime)
+                    .Select(m => new DbMessage
+                    {
+                        Id = m.Id,
+                        Author = m.Author,
+                        CreateTime = ToUtc(m.CreateTime),
+                        Content = m.Content,
+                        Status = m.Status,
+                        EndTurn = m.EndTurn?.ToString(),
+                        Weight = m.Weight,
+                        Metadata = m.Metadata,
+                        Recipient = m.Recipient,
+                        ConversationId = conversation.Id,
+                        Sequence = m.Sequence
+                    })
+                    .ToList()
             };
 
             // Apply metadata if provided
@@ -240,6 +245,8 @@ namespace ChatGPTcorpus.Services
                     Author = conversationObj["author"]?["role"]?.ToString() ?? string.Empty
                 };
 
+                var parsedMessages = new List<Message>();
+
                 var mapping = conversationObj["mapping"] as JObject;
                 if (mapping == null) return conversation;
 
@@ -275,9 +282,20 @@ namespace ChatGPTcorpus.Services
                         // Only add message if it has content and author
                         if (!string.IsNullOrWhiteSpace(message.Content) && !string.IsNullOrWhiteSpace(message.Author))
                         {
+                            parsedMessages.Add(message);
                             conversation.Messages[message.Id] = message;
                         }
                     }
+                }
+
+                var orderedMessages = parsedMessages
+                    .OrderBy(m => m.CreateTime)
+                    .ThenBy(m => m.Id, StringComparer.Ordinal)
+                    .ToList();
+
+                for (int i = 0; i < orderedMessages.Count; i++)
+                {
+                    orderedMessages[i].Sequence = i + 1;
                 }
 
                 return conversation;

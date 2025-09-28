@@ -55,14 +55,17 @@ namespace ChatGPTcorpus.Models
         
         [Required]
         public string Content { get; set; } = string.Empty;
-        
+
         [Required]
         public string Status { get; set; } = string.Empty;
-        
+
         public string? EndTurn { get; set; }
-        
+
         public int Weight { get; set; }
-        
+
+        [Required]
+        public int Sequence { get; set; }
+
         // Store metadata as JSON string
         public string MetadataJson { get; set; } = "{}";
         
